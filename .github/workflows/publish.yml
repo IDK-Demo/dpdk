@@ -1,0 +1,45 @@
+name: Publish
+
+on:
+  push:
+    branches: [ "main", "release/*" ]
+  pull_request:
+    branches: [ "main", "release/*" ]
+  workflow_dispatch:
+    inputs:
+      source_repo:
+        description: 'Repository that triggered this workflow'
+        required: true
+      source_repo_branch:
+        description: 'Branch that triggered this workflow'
+        required: false
+        default: 'main'
+
+jobs:
+  build:
+    runs-on:
+      group: Default
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Set up Python 3.12.3
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12.3"
+      - name: clone me tool
+        env:
+          GH_PAT: ${{ secrets.COMMON }}
+        run: git clone https://x-access-token:${GH_PAT}@github.com/IDK-Demo/idk
+      - name: install me tool
+        run: pip install -e idk
+      - name: init
+        env:
+          GH_PAT: ${{ secrets.COMMON }}
+        run: idk bundle init
+      - name: build
+        run: idk bundle build
+      - name: publish
+        env:
+          GH_PAT: ${{ secrets.COMMON }}
+        run: idk bundle publish artefacts
